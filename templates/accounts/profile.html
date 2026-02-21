@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My Profile — BizConnect{% endblock %}
+{% block content %}
+<div class="page page-sm">
+  <h1 class="mb-5">My Profile</h1>
+
+  <div class="panel">
+    <div class="flex gap-4 mb-5" style="padding-bottom:var(--sp-5);border-bottom:1px solid var(--border);">
+      <div class="avatar avatar-xl" style="background:var(--charcoal);color:var(--gold);">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
+        {% else %}
+          {{ profile.user.username|first|upper }}
+        {% endif %}
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+        <div class="text-muted text-sm">{{ profile.user.email }}</div>
+        <span class="badge {% if profile.role == 'seller' %}badge-gold{% else %}badge-dark{% endif %} mt-2">
+          {{ profile.get_role_display }}
+        </span>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Profile Photo</label>
+        <input type="file" name="avatar" class="form-control" accept="image/*" />
+        <p class="form-hint">Accepted: JPG, PNG, WEBP</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bio</label>
+        <textarea name="bio" class="form-control" rows="3" placeholder="Tell the community about yourself…">{{ profile.bio }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-gold">Save Changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

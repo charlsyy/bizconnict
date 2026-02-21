@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Payment — {{ order.order_number }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.pay-tab {
+  display: flex; gap: var(--sp-2);
+  margin-bottom: var(--sp-5); flex-wrap: wrap;
+}
+.pay-tab button {
+  flex: 1; min-width: 120px; padding: 12px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all var(--t); color: var(--text-2);
+}
+.pay-tab button:hover { border-color: var(--gold); color: var(--charcoal); }
+.pay-tab button.active {
+  border-color: var(--gold);
+  background: var(--gold-light);
+  color: var(--charcoal);
+}
+.pay-section { display: none; }
+.pay-section.active { display: block; }
+.account-detail {
+  background: var(--ivory-dark);
+  border-radius: var(--r-sm);
+  padding: var(--sp-4); margin-bottom: var(--sp-3);
+}
+.account-detail .acct-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-2); margin-bottom: 4px;
+}
+.account-detail .acct-value {
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--charcoal); font-family: var(--font-display);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:600px;">
+  <a href="{% url 'order_detail' order.id %}"
+     class="btn btn-ghost btn-sm mb-4" style="margin-left:-8px;">
+    ← Back to Order
+  </a>
+
+  <span class="label">Checkout</span>
+  <h1 class="mt-1 mb-4">Choose Payment Method</h1>
+
+  <!-- Order summary -->
+  <div class="panel mb-4"
+       style="background:var(--ivory-dark);padding:var(--sp-4);">
+    <div class="flex-between mb-2">
+      <span class="text-sm text-muted">Order</span>
+      <span style="font-family:var(--font-display);font-weight:700;">
+        {{ order.order_number }}
+      </span>
+    </div>
+    <div class="flex-between">
+      <span class="text-sm text-muted">Amount to Pay</span>
+      <span style="font-family:var(--font-display);font-size:1.4rem;
+                   font-weight:700;color:var(--gold-dark);">
+        &#8369;{{ order.total_amount|floatformat:2 }}
+      </span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <!-- Tabs -->
+    <div class="pay-tab">
+      <button onclick="showTab('cod')"      id="tab-cod"    class="active">COD</button>
+      <button onclick="showTab('gcash')"    id="tab-gcash">GCash</button>
+      <button onclick="showTab('bank')"     id="tab-bank">Bank Transfer</button>
+      <button onclick="showTab('stripe')"   id="tab-stripe">Card / Stripe</button>
+    </div>
+
+    <!-- COD -->
+    <div id="section-cod" class="pay-section active">
+      <div class="alert alert-info mb-4" style="font-size:13px;">
+        Pay in cash when your order arrives. No upfront payment needed.
+      </div>
+      <div class="account-detail">
+        <div class="acct-label">You will pay upon delivery</div>
+        <div class="acct-value">&#8369;{{ order.total_amount|floatformat:2 }}</div>
+        <div class="text-xs text-muted mt-1">
+          Have the exact amount ready for the courier.
+        </div>
+      </div>
+      <form method="post" action="{% url 'payment_cod' order.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-gold btn-block btn-lg mt-4">
+          Confirm Cash on Delivery
+        </button>
+      </form>
+    </div>
+
+    <!-- GCash -->
+    <div id="section-gcash" class="pay-section">
+      <p class="text-sm text-muted mb-4">
+        Send payment to the GCash number below then upload your screenshot.
+      </p>
+      <div class="account-detail">
+        <div class="acct-label">GCash Number</div>
+        <div class="acct-value">{{ gcash_number }}</div>
+        <div class="text-sm text-muted mt-1">{{ gcash_name }}</div>
+      </div>
+      <div class="account-detail">
+        <div class="acct-label">Amount to Send</div>
+        <div class="acct-value">&#8369;{{ order.total_amount|floatformat:2 }}</div>
+      </div>
+      <form method="post" action="{% url 'payment_manual' order.id %}"
+            enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="method" value="gcash" />
+        <div class="form-group mt-4">
+          <label class="form-label">GCash Reference Number *</label>
+          <input type="text" name="reference_number" class="form-control"
+                 placeholder="e.g. 1234567890" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your GCash Name *</label>
+          <input type="text" name="sender_name" class="form-control"
+                 placeholder="Name on your GCash account" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Upload Screenshot *</label>
+          <input type="file" name="proof_image" class="form-control"
+                 accept="image/*" required />
+          <p class="form-hint">Screenshot of your GCash transaction confirmation</p>
+        </div>
+        <button type="submit" class="btn btn-gold btn-block btn-lg mt-2">
+          Submit Payment Proof
+        </button>
+      </form>
+    </div>
+
+    <!-- Bank Transfer -->
+    <div id="section-bank" class="pay-section">
+      <p class="text-sm text-muted mb-4">
+        Transfer to the account below then upload your deposit slip.
+      </p>
+      <div class="account-detail">
+        <div class="acct-label">Bank</div>
+        <div class="acct-value">{{ bank_name }}</div>
+      </div>
+      <div class="account-detail">
+        <div class="acct-label">Account Number</div>
+        <div class="acct-value">{{ bank_account }}</div>
+      </div>
+      <div class="account-detail">
+        <div class="acct-label">Account Name</div>
+        <div class="acct-value">{{ bank_account_name }}</div>
+      </div>
+      <div class="account-detail">
+        <div class="acct-label">Amount to Transfer</div>
+        <div class="acct-value">&#8369;{{ order.total_amount|floatformat:2 }}</div>
+      </div>
+      <form method="post" action="{% url 'payment_manual' order.id %}"
+            enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="method" value="bank_transfer" />
+        <div class="form-group mt-4">
+          <label class="form-label">Transaction / Reference Number *</label>
+          <input type="text" name="reference_number" class="form-control"
+                 placeholder="e.g. TXN-12345678" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Name Used *</label>
+          <input type="text" name="sender_name" class="form-control"
+                 placeholder="Name on your bank account" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Upload Deposit Slip / Screenshot *</label>
+          <input type="file" name="proof_image" class="form-control"
+                 accept="image/*" required />
+        </div>
+        <button type="submit" class="btn btn-gold btn-block btn-lg mt-2">
+          Submit Payment Proof
+        </button>
+      </form>
+    </div>
+
+    <!-- Stripe -->
+    <div id="section-stripe" class="pay-section">
+      <div class="alert alert-info mb-4" style="font-size:13px;">
+        Pay securely with Visa, Mastercard, or any debit/credit card via Stripe.
+      </div>
+      <div class="account-detail mb-4">
+        <div class="acct-label">Total Charge</div>
+        <div class="acct-value">&#8369;{{ order.total_amount|floatformat:2 }}</div>
+        <div class="text-xs text-muted mt-1">
+          You will be redirected to Stripe's secure payment page.
+        </div>
+      </div>
+      <a href="{% url 'payment_stripe' order.id %}"
+         class="btn btn-dark btn-block btn-lg">
+        Pay with Card via Stripe
+      </a>
+      <p class="text-xs text-muted text-center mt-3">
+        Secured by Stripe — your card details are never stored on our servers.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  ['cod','gcash','bank','stripe'].forEach(function(t) {
+    document.getElementById('section-' + t).classList.remove('active');
+    document.getElementById('tab-' + t).classList.remove('active');
+  });
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+{% endblock %}

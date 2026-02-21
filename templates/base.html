@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}BizConnect{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'theme.css' %}" />
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="site">
+
+  {% include "partials/nav.html" %}
+
+  <div id="toast-container"></div>
+
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/footer.html" %}
+
+<script>
+window.showToast = function(msg, type) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' toast-' + type : '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() { t.remove(); }, 4200);
+};
+
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? v.pop() : '';
+}
+
+async function doLogout() {
+  try {
+    if (typeof firebase !== 'undefined') await firebase.auth().signOut();
+  } catch(e) {}
+  window.location.href = "{% url 'logout' %}";
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  {% if messages %}
+    {% for msg in messages %}
+      showToast("{{ msg|escapejs }}", "{% if 'error' in msg.tags %}error{% elif 'success' in msg.tags %}success{% else %}info{% endif %}");
+    {% endfor %}
+  {% endif %}
+
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('nav-links');
+  if (ham && menu) {
+    ham.addEventListener('click', function() { menu.classList.toggle('open'); });
+  }
+
+  {% if user.is_authenticated %}
+  (function pollNotifs() {
+    fetch('/notifications/count/')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        const b = document.getElementById('notif-badge');
+        if (!b) return;
+        if (d.count > 0) { b.textContent = d.count; b.style.display = 'flex'; }
+        else { b.style.display = 'none'; }
+      }).catch(function(){});
+    setTimeout(pollNotifs, 20000);
+  })();
+  {% endif %}
+});
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Users — BizConnect Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-header flex-between">
+  <div><span class="label">Management</span><h1 class="mt-1">Users</h1></div>
+  <span class="badge badge-neutral" style="font-size:13px;padding:6px 14px;">{{ users.count }} total</span>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td><strong>{{ u.username }}</strong>{% if u.is_staff %} <span class="badge badge-gold" style="font-size:10px;">Staff</span>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.profile %}
+            <span class="badge {% if u.profile.role == 'seller' %}badge-gold{% else %}badge-dark{% endif %}">{{ u.profile.get_role_display }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if u.is_active %}
+            <span class="badge badge-success">Active</span>
+          {% else %}
+            <span class="badge badge-danger">Banned</span>
+          {% endif %}
+        </td>
+        <td>{{ u.date_joined|date:"M d, Y" }}</td>
+        <td>
+          {% if u != request.user %}
+          <form method="post" action="{% url 'admin_toggle_user' u.pk %}" onsubmit="return confirm('Toggle this user?')">
+            {% csrf_token %}
+            <button type="submit" class="btn {% if u.is_active %}btn-danger{% else %}btn-outline{% endif %} btn-sm">
+              {% if u.is_active %}Ban{% else %}Unban{% endif %}
+            </button>
+          </form>
+          {% else %}
+          <span class="text-muted text-xs">You</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

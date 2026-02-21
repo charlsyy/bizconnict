@@ -1,0 +1,52 @@
+{% extends "admin_monitor/admin_base.html" %}
+{% block title %}Users Monitor{% endblock %}
+
+{% block content %}
+<h1>Users</h1>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Username</th>
+<th>Email</th>
+<th>Role</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+{% for user in sellers %}
+<tr>
+<td>{{ user.id }}</td>
+<td>{{ user.username }}</td>
+<td>{{ user.email }}</td>
+<td>Seller</td>
+<td>{% if user.is_active %}Active{% else %}Banned{% endif %}</td>
+<td>
+<form method="post" action="{% url 'admin_delete_user' user.id %}">
+{% csrf_token %}
+<button class="btn-danger">Delete</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+
+{% for user in buyers %}
+<tr>
+<td>{{ user.id }}</td>
+<td>{{ user.username }}</td>
+<td>{{ user.email }}</td>
+<td>Buyer</td>
+<td>{% if user.is_active %}Active{% else %}Banned{% endif %}</td>
+<td>
+<form method="post" action="{% url 'admin_delete_user' user.id %}">
+{% csrf_token %}
+<button class="btn-danger">Delete</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

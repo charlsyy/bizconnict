@@ -1,0 +1,35 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Community — BizConnect Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-header">
+  <span class="label">Moderation</span>
+  <h1 class="mt-1">Community Posts</h1>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Author</th><th>Title</th><th>Answers</th><th>Solved</th><th>Posted</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for q in questions %}
+      <tr>
+        <td><strong>{{ q.author.username }}</strong></td>
+        <td style="max-width:280px;">{{ q.title|truncatechars:70 }}</td>
+        <td>{{ q.answer_count }}</td>
+        <td>{% if q.is_solved %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-neutral">No</span>{% endif %}</td>
+        <td>{{ q.created_at|date:"M d, Y" }}</td>
+        <td>
+          {% if q.is_active %}
+          <form method="post" action="{% url 'admin_delete_question' q.pk %}" onsubmit="return confirm('Remove this post?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+          </form>
+          {% else %}
+          <span class="text-muted text-xs">Removed</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

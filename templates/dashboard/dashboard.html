@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — BizConnect{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="flex-between mb-6">
+    <div>
+      <span class="label">Staff Area</span>
+      <h1 class="mt-1">Admin Dashboard</h1>
+    </div>
+    <a href="{% url 'dashboard_reports' %}" class="btn btn-outline">
+      View Reports
+      {% if pending_reports > 0 %}
+      <span class="badge badge-danger" style="margin-left:4px;">{{ pending_reports }}</span>
+      {% endif %}
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-4 mb-6">
+    <div class="stat-card gold">
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_products }}</div>
+      <div class="stat-label">Products</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_orders }}</div>
+      <div class="stat-label">Orders</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-value" style="font-size:1.5rem;">₱{{ total_revenue|floatformat:2 }}</div>
+      <div class="stat-label">Total Revenue</div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5);margin-bottom:var(--sp-6);">
+    <div class="panel">
+      <h3 class="mb-4">Top Sellers by Revenue</h3>
+      <canvas id="sellerChart" height="200"></canvas>
+    </div>
+    <div class="panel">
+      <h3 class="mb-4">Orders by Status</h3>
+      <canvas id="statusChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Users -->
+  <div class="panel mb-6">
+    <h3 class="mb-4">All Users ({{ total_users }})</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td><strong>{{ u.username }}</strong>{% if u.is_staff %} <span class="badge badge-gold">Staff</span>{% endif %}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% if u.profile %}
+                <span class="badge {% if u.profile.role == 'seller' %}badge-gold{% else %}badge-dark{% endif %}">
+                  {{ u.profile.get_role_display }}
+                </span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ u.date_joined|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Feed Posts -->
+  <div class="panel mb-6">
+    <h3 class="mb-4">Feed Posts</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Author</th><th>Content</th><th>Media</th><th>Posted</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for post in posts %}
+          <tr>
+            <td><strong>{{ post.author.username }}</strong></td>
+            <td style="max-width:260px;">{{ post.text|truncatechars:80 }}</td>
+            <td>
+              {% if post.image %}<img src="{{ post.image.url }}" style="height:40px;border-radius:4px;" />
+              {% elif post.video %}<span class="badge badge-neutral">Video</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ post.created_at|date:"M d, Y" }}</td>
+            <td>
+              <form method="post" action="{% url 'delete_post_admin' post.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete post?')">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <div class="panel mb-6">
+    <h3 class="mb-4">All Orders</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Order #</th><th>Buyer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td><a href="{% url 'order_timeline' o.pk %}">#{{ o.id }}</a></td>
+            <td>{{ o.buyer.username }}</td>
+            <td>₱{{ o.total_amount|floatformat:2 }}</td>
+            <td><span class="badge {% if o.status == 'delivered' %}badge-success{% elif o.status == 'cancelled' %}badge-danger{% else %}badge-warning{% endif %}">{{ o.get_status_display }}</span></td>
+            <td>{{ o.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// Top sellers chart
+const sellerLabels = [{% for s in top_sellers %}'{{ s.seller__username }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const sellerData   = [{% for s in top_sellers %}{{ s.revenue|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('sellerChart'), {
+  type: 'bar',
+  data: {
+    labels: sellerLabels,
+    datasets: [{
+      label: 'Revenue (₱)',
+      data: sellerData,
+      backgroundColor: 'rgba(201,169,110,0.8)',
+      borderColor: '#A07840',
+      borderWidth: 1,
+      borderRadius: 6,
+    }]
+  },
+  options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+});
+
+// Status chart
+const statusData = {
+  labels: ['Pending','Accepted','Packed','Shipped','Delivered','Cancelled'],
+  datasets: [{
+    data: [
+      {% for s in orders %}{% if s.status == 'pending' %}1+{% endif %}{% endfor %}0,
+      {% for s in orders %}{% if s.status == 'accepted' %}1+{% endif %}{% endfor %}0,
+      {% for s in orders %}{% if s.status == 'packed' %}1+{% endif %}{% endfor %}0,
+      {% for s in orders %}{% if s.status == 'shipped' %}1+{% endif %}{% endfor %}0,
+      {% for s in orders %}{% if s.status == 'delivered' %}1+{% endif %}{% endfor %}0,
+      {% for s in orders %}{% if s.status == 'cancelled' %}1+{% endif %}{% endfor %}0,
+    ],
+    backgroundColor: ['#FFF3CD','#DBEAFE','#E8D5B0','#D8F3DC','#2D6A4F','#FDECEA'],
+    borderWidth: 0,
+  }]
+};
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: statusData,
+  options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Checkout — BizConnect{% endblock %}
+{% block content %}
+
+<div class="page" style="max-width:640px;">
+  <span class="label">Purchase</span>
+  <h1 class="mt-1 mb-5">Checkout</h1>
+
+  <div class="panel mb-4">
+    <h3 class="mb-4">Order Summary</h3>
+    <div id="summary-body"></div>
+    <div class="divider"></div>
+    <div class="flex-between">
+      <span style="font-weight:600;">Total</span>
+      <span id="summary-total" style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--gold-dark);">&#8369;0.00</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div id="checkout-err" class="alert alert-error hidden"></div>
+
+    <!-- IMPORTANT: add a form so csrf token is rendered -->
+    <form id="checkout-form" onsubmit="event.preventDefault(); placeOrder();">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Shipping Address *</label>
+        <textarea id="shipping" class="form-control" rows="3" placeholder="Full address including city, province, zip…" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Order Notes (optional)</label>
+        <input type="text" id="notes" class="form-control" placeholder="Special instructions for the seller…" />
+      </div>
+
+      <button type="submit" id="place-btn" class="btn btn-gold btn-lg btn-block mt-4">Place Order</button>
+      <a href="{% url 'cart' %}" class="btn btn-ghost btn-block mt-2">Back to Cart</a>
+    </form>
+  </div>
+</div>
+
+<script>
+const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+(function renderSummary() {
+  const el = document.getElementById('summary-body');
+  const totalEl = document.getElementById('summary-total');
+
+  if (!cart.length) {
+    el.innerHTML = '<p class="text-muted">Cart is empty.</p>';
+    totalEl.innerHTML = '₱0.00';
+    return;
+  }
+
+  let total = 0;
+  let html = '';
+
+  cart.forEach(function(i) {
+    const sub = parseFloat(i.price) * i.quantity;
+    total += sub;
+
+    html += `
+      <div class="flex-between mb-3" style="font-size:14px;">
+        <span>${i.name} x${i.quantity}</span>
+        <span>₱${sub.toFixed(2)}</span>
+      </div>
+    `;
+  });
+
+  el.innerHTML = html;
+  totalEl.innerHTML = '₱' + total.toFixed(2);
+})();
+
+function csrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+async function placeOrder() {
+  const err = document.getElementById('checkout-err');
+  const btn = document.getElementById('place-btn');
+  const shipping = document.getElementById('shipping').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+
+  err.classList.add('hidden');
+  err.textContent = '';
+
+  if (!cart.length) {
+    err.textContent = 'Cart is empty.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  if (!shipping) {
+    err.textContent = 'Shipping address required.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Placing order...';
+
+  try {
+    const response = await fetch("{% url 'checkout_submit' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken(),
+      },
+      body: JSON.stringify({
+        items: cart,
+        shipping_address: shipping,
+        notes: notes
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      err.textContent = data.error || "Order failed.";
+      err.classList.remove("hidden");
+      btn.disabled = false;
+      btn.textContent = "Place Order";
+      return;
+    }
+
+    localStorage.removeItem("cart");
+    window.location.href = "/shop/order/" + data.order_id + "/";
+  } catch (error) {
+    console.error(error);
+    err.textContent = "Network error.";
+    err.classList.remove("hidden");
+    btn.disabled = false;
+    btn.textContent = "Place Order";
+  }
+}
+</script>
+
+{% endblock %}

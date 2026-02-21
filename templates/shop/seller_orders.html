@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Seller Orders — BizConnect{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="flex-between mb-5">
+    <div>
+      <span class="label">Seller Portal</span>
+      <h1 class="mt-1">Manage Orders</h1>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'seller_dashboard' %}" class="btn btn-outline btn-sm">My Products</a>
+      <a href="{% url 'seller_reports' %}" class="btn btn-outline btn-sm">Reports</a>
+    </div>
+  </div>
+
+  {% if order_items %}
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Buyer</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Amount</th>
+          <th>Item Status</th>
+          <th>Date</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+        <tr>
+          <td>
+            <a href="{% url 'order_detail' item.order.id %}" style="font-weight:600;font-family:var(--font-display);">
+              {{ item.order.order_number }}
+            </a>
+          </td>
+          <td>{{ item.order.buyer.username }}</td>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td style="font-weight:600;">&#8369;{{ item.subtotal|floatformat:2 }}</td>
+
+          <!-- ITEM STATUS -->
+          <td>
+            <span class="badge {% if item.status == 'delivered' %}badge-success{% elif item.status == 'cancelled' %}badge-danger{% elif item.status == 'shipped' %}badge-dark{% else %}badge-warning{% endif %}">
+              {{ item.get_status_display }}
+            </span>
+          </td>
+
+          <td>{{ item.order.created_at|date:"M d, Y" }}</td>
+
+          <!-- UPDATE + PAYMENT CONFIRM -->
+          <td>
+            <!-- Update Status Form -->
+            <form method="post" action="{% url 'update_item_status' item.pk %}">
+              {% csrf_token %}
+              <div class="flex gap-2" style="align-items:center;">
+                <select name="status" class="form-control" style="padding:5px 8px;font-size:12px;width:auto;">
+                  {% for val, label in item.get_status_choices %}
+                    <option value="{{ val }}" {% if item.status == val %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-dark btn-sm">Update</button>
+              </div>
+            </form>
+
+            <!-- CONFIRM PAYMENT SECTION -->
+            {% with payment=item.order.payment %}
+              {% if payment and payment.status == 'submitted' %}
+              <div class="mt-2" style="background:var(--warning-bg);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3);">
+                <div class="text-xs text-muted mb-1">
+                  Payment proof submitted by buyer
+                </div>
+
+                <div class="flex gap-2">
+                  <a href="{{ payment.proof_image.url }}" target="_blank" class="btn btn-outline btn-sm">
+                    View Proof
+                  </a>
+
+                  <form method="post" action="{% url 'confirm_payment_proof' item.order.id %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-gold btn-sm"
+                            onclick="return confirm('Confirm this payment?')">
+                      Confirm Payment
+                    </button>
+                  </form>
+                </div>
+
+                <div class="text-xs text-muted mt-1">
+                  Ref: {{ payment.reference_number }} — {{ payment.sender_name }}
+                </div>
+              </div>
+              {% endif %}
+            {% endwith %}
+
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="panel text-center" style="padding:var(--sp-9);">
+    <p class="text-muted">No orders received yet.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

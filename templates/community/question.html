@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ question.title }} — BizConnect{% endblock %}
+{% block content %}
+<div class="page" style="max-width:760px;">
+  <a href="{% url 'community_list' %}" class="btn btn-ghost btn-sm mb-4" style="margin-left:-8px;">← Back</a>
+
+  <div class="panel mb-5">
+    <div class="flex gap-2 mb-3">
+      {% if question.is_solved %}
+        <span class="badge badge-success">Solved</span>
+      {% else %}
+        <span class="badge badge-neutral">Open</span>
+      {% endif %}
+    </div>
+    <h1 style="font-size:1.5rem;margin-bottom:var(--sp-3);">{{ question.title }}</h1>
+    <p style="color:var(--text-2);line-height:1.75;margin-bottom:var(--sp-4);">{{ question.body }}</p>
+    {% if question.image %}
+      <img src="{{ question.image.url }}" alt="" style="max-width:100%;border-radius:var(--r-md);margin-bottom:var(--sp-4);" />
+    {% endif %}
+    <div class="flex gap-3 text-sm text-muted">
+      <span>Asked by <strong>{{ question.author.username }}</strong></span>
+      <span>{{ question.created_at|date:"M d, Y" }}</span>
+    </div>
+    {% if question.author == request.user and not question.is_solved %}
+    <form method="post" action="{% url 'mark_solved' question.pk %}" style="margin-top:var(--sp-4);">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline btn-sm">Mark as Solved</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <h2 style="font-size:1.1rem;margin-bottom:var(--sp-4);">{{ answers.count }} Answer{{ answers.count|pluralize }}</h2>
+
+  {% for answer in answers %}
+  <div class="card mb-3 {% if answer.is_accepted %}" style="border-color:var(--gold);border-width:2px;"{% else %}"{% endif %}>
+    <div class="card-body">
+      {% if answer.is_accepted %}
+      <div class="badge badge-success mb-3">Accepted Answer</div>
+      {% endif %}
+      <div class="flex gap-3 mb-3">
+        <div class="avatar avatar-sm" style="flex-shrink:0;">
+          {% if answer.author.profile.avatar %}
+            <img src="{{ answer.author.profile.avatar.url }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />
+          {% else %}
+            {{ answer.author.username|first|upper }}
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">{{ answer.author.username }}</div>
+          <div class="text-xs text-muted">{{ answer.created_at|timesince }} ago</div>
+        </div>
+      </div>
+      <p style="line-height:1.75;">{{ answer.body }}</p>
+      {% if question.author == request.user and not answer.is_accepted %}
+      <form method="post" action="{% url 'accept_answer' question.pk answer.pk %}" style="margin-top:var(--sp-3);">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-gold btn-sm">Accept this Answer</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="panel text-center mb-4" style="padding:var(--sp-5);">
+    <p class="text-muted">No answers yet. Be the first to answer!</p>
+  </div>
+  {% endfor %}
+
+  <div class="panel mt-5">
+    <h3 class="mb-4">Your Answer</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <textarea name="body" class="form-control" rows="5" placeholder="Write a helpful answer…" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-gold">Submit Answer</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

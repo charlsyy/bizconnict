@@ -1,0 +1,42 @@
+{% extends "admin_monitor/admin_base.html" %}
+{% block title %}Shop Monitor{% endblock %}
+
+{% block content %}
+<h1>Shop Items</h1>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Seller</th>
+<th>Name</th>
+<th>Price</th>
+<th>Image</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+{% for product in products %}
+<tr>
+<td>{{ product.id }}</td>
+<td>{{ product.seller.username }}</td>
+<td>{{ product.name }}</td>
+<td>₱{{ product.price }}</td>
+<td>
+{% if product.image %}
+<img src="{{ product.image.url }}" class="thumb">
+{% else %}
+—
+{% endif %}
+</td>
+<td>
+<form method="post" action="{% url 'admin_delete_product' product.id %}">
+{% csrf_token %}
+<button class="btn-danger">Delete</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

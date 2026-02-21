@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Shop — BizConnect{% endblock %}
+{% block extra_head %}
+<style>
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+}
+@media(max-width:1100px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
+@media(max-width:720px)  { .products-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width:480px)  { .products-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="flex-between mb-5" style="flex-wrap:wrap;gap:var(--sp-3);">
+    <div>
+      <span class="label">Marketplace</span>
+      <h1 style="margin-top:4px;">Discover Products</h1>
+    </div>
+    <form method="get" class="flex gap-2">
+      <input type="text" name="q" value="{{ query }}"
+             class="form-control" placeholder="Search products…"
+             style="width:220px;" />
+      <button type="submit" class="btn btn-dark btn-sm">Search</button>
+      {% if query %}
+        <a href="{% url 'product_list' %}" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if products %}
+  <div class="products-grid">
+    {% for p in products %}
+    <div class="product-card card-hover" style="display:flex;flex-direction:column;">
+      <a href="{% url 'product_detail' p.pk %}" style="text-decoration:none;color:inherit;flex:1;display:flex;flex-direction:column;">
+        {% if p.image %}
+          <img src="{{ p.image.url }}" alt="{{ p.name }}" class="product-card-img" />
+        {% else %}
+          <div class="product-card-img-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8m-4-4v4"/>
+            </svg>
+          </div>
+        {% endif %}
+        <div class="product-card-body" style="flex:1;">
+          <div class="product-name">{{ p.name }}</div>
+          <div class="product-price mt-1">&#8369;{{ p.price|floatformat:2 }}</div>
+          <div class="product-seller mt-1">by {{ p.seller.username }}</div>
+          {% if p.stock == 0 %}
+            <span class="badge badge-danger mt-2" style="font-size:10px;">Out of Stock</span>
+          {% elif p.stock <= 5 %}
+            <span class="badge badge-warning mt-2" style="font-size:10px;">Only {{ p.stock }} left</span>
+          {% endif %}
+        </div>
+      </a>
+      {% if user.is_authenticated and user.id != p.seller_id and p.stock > 0 %}
+      <div style="padding:0 var(--sp-4) var(--sp-4);">
+        <button onclick="addToCart({{ p.pk }}, '{{ p.name|escapejs }}', {{ p.price }})"
+                class="btn btn-gold btn-sm w-full">
+          Add to Cart
+        </button>
+      </div>
+      {% elif p.stock == 0 %}
+      <div style="padding:0 var(--sp-4) var(--sp-4);">
+        <button disabled class="btn btn-outline btn-sm w-full" style="opacity:0.5;cursor:not-allowed;">
+          Out of Stock
+        </button>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="panel text-center" style="padding:var(--sp-9);">
+    <p class="text-muted">
+      {% if query %}No products found for "{{ query }}"{% else %}No products yet.{% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function addToCart(id, name, price) {
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const ex = cart.find(function(i) { return i.product_id === id; });
+  if (ex) {
+    ex.quantity += 1;
+    showToast(name + ' quantity updated.', 'success');
+  } else {
+    cart.push({ product_id: id, name: name, price: price, quantity: 1 });
+    showToast(name + ' added to cart!', 'success');
+  }
+  localStorage.setItem('cart', JSON.stringify(cart));
+}
+</script>
+{% endblock %}

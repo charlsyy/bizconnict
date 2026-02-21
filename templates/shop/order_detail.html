@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_number }} — BizConnect{% endblock %}
+{% block content %}
+<div class="page page-sm">
+  <a href="{% url 'my_orders' %}" class="btn btn-ghost btn-sm mb-4" style="margin-left:-8px;">← My Orders</a>
+
+  <span class="label">Order Tracking</span>
+  <h1 class="mt-1 mb-2">{{ order.order_number }}</h1>
+  <p class="text-muted text-sm mb-5">Placed on {{ order.created_at|date:"F d, Y H:i" }}</p>
+
+  <!-- MAIN STATUS PANEL -->
+  <div class="panel mb-4">
+    <div class="flex-between mb-3">
+      <div>
+        <div class="text-sm text-muted mb-1">Overall Status</div>
+        <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'cancelled' or order.status == 'refunded' %}badge-danger{% elif order.status == 'shipped' %}badge-dark{% else %}badge-warning{% endif %}" style="font-size:13px;padding:5px 16px;">
+          {{ order.get_status_display }}
+        </span>
+      </div>
+      <div class="text-right">
+        <div class="text-sm text-muted mb-1">Total Paid</div>
+        <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--gold-dark);">&#8369;{{ order.total_amount|floatformat:2 }}</div>
+      </div>
+    </div>
+
+    {% if order.shipping_address %}
+    <div class="text-sm mb-3" style="background:var(--ivory-dark);padding:var(--sp-3);border-radius:var(--r-sm);">
+      <span class="text-muted">Ship to:</span> {{ order.shipping_address }}
+    </div>
+    {% endif %}
+
+    <!-- PAYMENT STATUS -->
+    <div class="mt-4" style="background:var(--ivory-dark);border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);">
+      <div class="flex-between">
+        <span class="text-sm text-muted">Payment</span>
+        {% with p=order.payment %}
+          {% if p %}
+            <div class="flex gap-2 align-items-center">
+              <span class="badge 
+                {% if p.status == 'confirmed' %}badge-success
+                {% elif p.status == 'submitted' %}badge-warning
+                {% elif p.status == 'failed' %}badge-danger
+                {% else %}badge-neutral
+                {% endif %}">
+                {{ p.get_status_display }}
+              </span>
+              <span class="text-xs text-muted">via {{ p.get_method_display }}</span>
+            </div>
+          {% else %}
+            <span class="badge badge-danger">Not Paid</span>
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+
+    {% with p=order.payment %}
+    {% if order.buyer == request.user %}
+      {% if not p or p.status == 'pending' %}
+      <div class="mt-4">
+        <a href="{% url 'payment_page' order.id %}" class="btn btn-gold btn-lg">
+          Pay Now
+        </a>
+      </div>
+      {% elif p.status == 'submitted' %}
+      <div class="alert alert-warning mt-4" style="font-size:13px;">
+        Payment proof submitted. Waiting for seller to confirm.
+      </div>
+      {% endif %}
+    {% endif %}
+    {% endwith %}
+
+  </div>
+  <!-- END MAIN STATUS PANEL -->
+
+  <!-- TIMELINE PANEL -->
+  <div class="panel mb-4">
+    <h3 class="mb-4">Status Timeline</h3>
+    <div class="timeline">
+      {% for log in logs %}
+  <div class="timeline-item">
+    <div class="timeline-dot {% if forloop.last %}active{% else %}done{% endif %}"></div>
+    <div class="timeline-label">{{ log.new_status }}</div>
+    {% if log.note %}
+      <div class="text-sm text-muted">{{ log.note }}</div>
+    {% endif %}
+    <div class="timeline-date">{{ log.created_at|date:"M d, Y H:i" }}</div>
+  </div>
+{% empty %}
+  <p class="text-muted">No updates yet.</p>
+{% endfor %}
+
+  <!-- ITEMS PANEL -->
+  <div class="panel">
+    <h3 class="mb-4">Items in This Order</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Seller</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+          <tr>
+            <td>{{ item.product_name }}</td>
+            <td>{{ item.seller.username|default:"—" }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>&#8369;{{ item.unit_price|floatformat:2 }}</td>
+            <td>&#8369;{{ item.subtotal|floatformat:2 }}</td>
+            <td>
+              <span class="badge {% if item.status == 'delivered' %}badge-success{% elif item.status == 'cancelled' %}badge-danger{% elif item.status == 'shipped' %}badge-dark{% else %}badge-warning{% endif %}">
+                {{ item.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

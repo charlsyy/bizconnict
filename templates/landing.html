@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}BizConnect — Premium Philippine Marketplace{% endblock %}
+
+{% block extra_head %}
+<style>
+/* =========================
+   LANDING PAGE (PREMIUM)
+   ========================= */
+
+/* Fallback button styling (in case global CSS fails or gets overridden) */
+.hero .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  transition: transform var(--t), box-shadow var(--t), background var(--t), color var(--t), border-color var(--t);
+  cursor: pointer;
+}
+.hero .btn:hover{ transform: translateY(-1px); }
+.hero .btn-dark{ background: var(--charcoal); color: white; box-shadow: var(--sh-md); }
+.hero .btn-dark:hover{ background: var(--charcoal-2); box-shadow: var(--sh-lg); }
+.hero .btn-gold{ background: var(--gold); color: var(--charcoal); box-shadow: var(--sh-gold); }
+.hero .btn-gold:hover{ background: var(--gold-dark); color: white; box-shadow: var(--sh-lg); }
+.hero .btn-outline{ background: transparent; color: var(--charcoal); border-color: var(--border); }
+.hero .btn-outline:hover{ background: var(--ivory-dark); border-color: var(--border-gold); }
+.hero .btn-lg{ padding: 12px 22px; font-size: 14px; }
+.hero .btn-xl{ padding: 16px 34px; font-size: 16px; }
+
+.hero{
+  min-height: calc(100vh - var(--nav-h));
+  padding: var(--sp-8) 0 var(--sp-8);
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 50%, rgba(201,169,110,0.09) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 85% 20%, rgba(28,28,30,0.045) 0%, transparent 60%),
+    var(--bg);
+}
+
+.hero-wrap{
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 var(--sp-5);
+}
+
+.hero-top{
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--sp-7);
+  align-items: center;
+}
+
+.hero-eyebrow{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ivory-dark);
+  border: 1px solid var(--border-gold);
+  padding: 7px 18px;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+}
+.hero-eyebrow::before{
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+
+.hero-title{
+  margin-top: var(--sp-4);
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 5.6vw, 4.3rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -1.6px;
+  color: var(--charcoal);
+}
+.hero-title em{
+  font-style: normal;
+  color: var(--gold);
+}
+
+.hero-sub{
+  margin-top: var(--sp-4);
+  font-size: 16px;
+  color: var(--text-2);
+  line-height: 1.8;
+  max-width: 60ch;
+}
+
+.hero-cta{
+  margin-top: var(--sp-6);
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hero-sign{
+  margin-top: var(--sp-4);
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+/* Trust card (right column) */
+.trust-card{
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  padding: clamp(22px, 3vw, 44px);
+  box-shadow: var(--sh-md);
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 10%, rgba(201,169,110,0.18), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.92), rgba(240,237,230,0.78));
+}
+
+.trust-title{
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  line-height: 1.15;
+}
+
+.trust-sub{
+  margin-top: 10px;
+  color: var(--text-2);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.trust-cta{
+  margin-top: var(--sp-5);
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* Features grid */
+.features{
+  margin-top: var(--sp-8);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+.feature{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--sh-sm);
+  transition: transform var(--t), box-shadow var(--t), border-color var(--t);
+}
+
+.feature:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--sh-lg);
+  border-color: var(--border-gold);
+}
+
+.feature-icon{
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--ivory-dark), rgba(201,169,110,0.18));
+  border: 1px solid var(--border);
+  margin-bottom: var(--sp-3);
+  font-weight: 900;
+  color: var(--gold-dark);
+  letter-spacing: 0.6px;
+}
+
+.feature h4{
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+}
+.feature p{
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* Footer note */
+.hero-bottom-note{
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .hero-top{ grid-template-columns: 1fr; gap: var(--sp-6); }
+  .hero-title{ text-align: center; }
+  .hero-sub{ margin-left: auto; margin-right: auto; text-align: center; }
+  .hero-cta{ justify-content: center; }
+  .hero-eyebrow{ margin-left: auto; margin-right: auto; }
+  .features{ grid-template-columns: 1fr; }
+  .trust-card{ text-align: left; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-wrap">
+
+    <div class="hero-top">
+      <!-- Left: Hero copy -->
+      <div>
+        <div class="hero-eyebrow">The Premium Philippine Marketplace</div>
+        <h1 class="hero-title">Buy. Sell.<br/><em>Connect.</em></h1>
+
+        <p class="hero-sub">
+          BizConnect is where Filipino buyers discover curated products and ambitious sellers build their brand —
+          all in one refined platform.
+        </p>
+
+        <div class="hero-cta">
+          <a href="{% url 'register' %}?role=buyer" class="btn btn-dark btn-xl">Shop as Buyer</a>
+          <a href="{% url 'register' %}?role=seller" class="btn btn-gold btn-xl">Sell with Us</a>
+          <a href="{% url 'login' %}" class="btn btn-outline btn-xl">Sign in</a>
+        </div>
+
+        <div class="hero-sign">
+          New here? Create an account as buyer or seller — no hassle.
+        </div>
+      </div>
+
+      <!-- Right: Trust card -->
+      <div class="trust-card">
+        <div class="label">Premium experience</div>
+        <h2 class="trust-title">Clean, fast transactions — with real tools built in.</h2>
+        <p class="trust-sub">
+          Media uploads, order tracking, chat, reports, and a custom admin dashboard — all inside one refined platform.
+        </p>
+
+        <div class="trust-cta">
+          <a class="btn btn-dark btn-lg" href="{% url 'login' %}">Explore Marketplace</a>
+          <a class="btn btn-outline btn-lg" href="{% url 'register' %}?role=seller">Become a Seller</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">A</div>
+        <h4>Secure Auth</h4>
+        <p>Role-based access for buyers, sellers, and admins.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">C</div>
+        <h4>Live Chat</h4>
+        <p>Direct buyer-seller messaging with clean conversation threads.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">O</div>
+        <h4>Order Tracking</h4>
+        <p>Shopee-style timeline from placement to delivery.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">S</div>
+        <h4>Seller Analytics</h4>
+        <p>Revenue summaries and downloadable performance reports.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">₱</div>
+        <h4>₱ Invoices</h4>
+        <p>Automatic invoice emails with Philippine peso formatting.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">Q</div>
+        <h4>Community Q&amp;A</h4>
+        <p>Ask questions, share answers, and grow together.</p>
+      </div>
+    </div>
+
+    <div class="hero-bottom-note">
+      Tip: For best results, upload product images through the seller panel so listings display consistently.
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Shop — BizConnect Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-header">
+  <span class="label">Management</span>
+  <h1 class="mt-1">Shop & Products</h1>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Product</th><th>Seller</th><th>Price</th><th>Stock</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>
+          <div class="flex gap-2" style="align-items:center;">
+            {% if p.image %}
+              <img src="{{ p.image.url }}" style="width:36px;height:36px;border-radius:var(--r-sm);object-fit:cover;flex-shrink:0;" />
+            {% endif %}
+            <strong>{{ p.name }}</strong>
+          </div>
+        </td>
+        <td>{{ p.seller.username }}</td>
+        <td>&#8369;{{ p.price|floatformat:2 }}</td>
+        <td>{{ p.stock }}</td>
+        <td>{% if p.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Hidden</span>{% endif %}</td>
+        <td>{{ p.created_at|date:"M d, Y" }}</td>
+        <td>
+          {% if p.is_active %}
+          <form method="post" action="{% url 'admin_delete_product' p.pk %}" onsubmit="return confirm('Hide this product?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Hide</button>
+          </form>
+          {% else %}
+          <span class="text-muted text-xs">Hidden</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

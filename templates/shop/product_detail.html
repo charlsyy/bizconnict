@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — BizConnect{% endblock %}
+{% block content %}
+<div class="page">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-7);
+              align-items:start;max-width:900px;">
+    <!-- Image -->
+    <div>
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+             style="width:100%;border-radius:var(--r-lg);box-shadow:var(--sh-md);" />
+      {% else %}
+        <div style="width:100%;aspect-ratio:1;background:var(--ivory-dark);
+                    border-radius:var(--r-lg);display:flex;align-items:center;
+                    justify-content:center;color:var(--text-3);">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div>
+      <span class="label">Product</span>
+      <h1 style="margin-top:6px;margin-bottom:var(--sp-3);">{{ product.name }}</h1>
+
+      <div style="font-family:var(--font-display);font-size:2rem;font-weight:700;
+                  color:var(--gold-dark);margin-bottom:var(--sp-3);">
+        &#8369;{{ product.price|floatformat:2 }}
+      </div>
+
+      <!-- Stock badge -->
+      {% if product.stock > 5 %}
+        <span class="badge badge-success mb-4">{{ product.stock }} in stock</span>
+      {% elif product.stock > 0 %}
+        <span class="badge badge-warning mb-4">Only {{ product.stock }} left!</span>
+      {% else %}
+        <span class="badge badge-danger mb-4">Out of Stock</span>
+      {% endif %}
+
+      <p style="color:var(--text-2);line-height:1.75;margin-bottom:var(--sp-5);
+                margin-top:var(--sp-3);">
+        {{ product.description }}
+      </p>
+
+      <div class="text-sm text-muted mb-4">
+        Sold by <strong>{{ product.seller.username }}</strong>
+      </div>
+
+      <div class="divider"></div>
+
+      {% if user.is_authenticated %}
+        {% if user.id != product.seller_id %}
+          <div class="flex gap-3 mt-4" style="flex-wrap:wrap;">
+            <a href="{% url 'start_chat' product.seller_id %}"
+               class="btn btn-outline">Message Seller</a>
+            {% if product.stock > 0 %}
+              <button onclick="addToCart({{ product.pk }},
+                               '{{ product.name|escapejs }}',
+                               {{ product.price }})"
+                      class="btn btn-gold btn-lg">
+                Add to Cart
+              </button>
+            {% else %}
+              <button disabled class="btn btn-outline btn-lg"
+                      style="opacity:0.5;cursor:not-allowed;">
+                Out of Stock
+              </button>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="flex gap-2 mt-4">
+            <a href="{% url 'product_edit' product.pk %}"
+               class="btn btn-outline">Edit Product</a>
+          </div>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-gold btn-lg mt-4">
+          Sign in to Purchase
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function addToCart(id, name, price) {
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const ex = cart.find(function(i) { return i.product_id === id; });
+  if (ex) {
+    ex.quantity += 1;
+    showToast(name + ' quantity updated.', 'success');
+  } else {
+    cart.push({ product_id: id, name: name, price: price, quantity: 1 });
+    showToast(name + ' added to cart!', 'success');
+  }
+  localStorage.setItem('cart', JSON.stringify(cart));
+}
+</script>
+{% endblock %}

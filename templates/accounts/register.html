@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Create Account — BizConnect{% endblock %}
+
+{% block extra_head %}
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+.auth-page { min-height:calc(100vh - var(--nav-h)); display:grid; place-items:center; padding:var(--sp-7) var(--sp-4); background:linear-gradient(160deg,var(--ivory) 60%,var(--ivory-dark) 100%); }
+.auth-box { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-xl); padding:var(--sp-7) var(--sp-6); box-shadow:var(--sh-lg); }
+.role-tab { display:flex; gap:var(--sp-2); margin-bottom:var(--sp-5); }
+.role-tab a { flex:1; text-align:center; padding:10px; border-radius:var(--r-sm); font-size:14px; font-weight:600; border:1.5px solid var(--border); color:var(--text-2); transition:all var(--t); }
+.role-tab a.active { background:var(--charcoal); color:white; border-color:var(--charcoal); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-box">
+    <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--charcoal);margin-bottom:4px;">Biz<span style="color:var(--gold);">Connect</span></div>
+    <p style="color:var(--text-2);font-size:14px;margin-bottom:var(--sp-5);">Create your account — it's free.</p>
+
+    <div class="role-tab">
+      <a href="?role=buyer" class="{% if role == 'buyer' %}active{% endif %}">Buyer Account</a>
+      <a href="?role=seller" class="{% if role == 'seller' %}active{% endif %}">Seller Account</a>
+    </div>
+
+    <div id="err" class="alert alert-error hidden"></div>
+
+    <div class="form-group">
+      <label class="form-label">Display Name</label>
+      <input type="text" id="displayName" class="form-control" placeholder="Your name" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" id="email" class="form-control" placeholder="you@example.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-control" placeholder="Min 6 characters" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input type="password" id="confirmPassword" class="form-control" placeholder="Repeat password" />
+    </div>
+
+    <button onclick="doRegister()" id="submit-btn" class="btn btn-dark btn-block mt-4" style="padding:13px;">
+      Create Account
+    </button>
+
+    <p style="text-align:center;margin-top:var(--sp-4);font-size:13px;color:var(--text-2);">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCbi58-AfOB9awW1kFzDI9im2R8MqJ0d88",
+  authDomain: "bizconnect-ac6cb.firebaseapp.com",
+  projectId: "bizconnect-ac6cb",
+};
+firebase.initializeApp(firebaseConfig);
+const ROLE = "{{ role }}";
+
+async function doRegister() {
+  const name=document.getElementById('displayName').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value;
+  const confirm=document.getElementById('confirmPassword').value;
+  const err=document.getElementById('err');
+  const btn=document.getElementById('submit-btn');
+  err.classList.add('hidden');
+
+  if(!name||!email||!pass){err.textContent='All fields required.';err.classList.remove('hidden');return;}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters.';err.classList.remove('hidden');return;}
+  if(pass!==confirm){err.textContent='Passwords do not match.';err.classList.remove('hidden');return;}
+
+  btn.disabled=true; btn.textContent='Creating account…';
+  try {
+    const cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:name});
+    const token=await cred.user.getIdToken();
+    const resp=await fetch("{% url 'firebase_auth' %}",{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+      body:JSON.stringify({id_token:token,role:ROLE,display_name:name,email}),
+    });
+    const data=await resp.json();
+    if(data.success){window.location.href=data.redirect;}
+    else{err.textContent=data.error||'Registration failed.';err.classList.remove('hidden');btn.disabled=false;btn.textContent='Create Account';}
+  } catch(e){err.textContent=e.message||'Registration failed.';err.classList.remove('hidden');btn.disabled=false;btn.textContent='Create Account';}
+}
+</script>
+{% endblock %}

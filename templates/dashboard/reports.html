@@ -1,0 +1,48 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Reports — BizConnect Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-header">
+  <span class="label">Moderation</span>
+  <h1 class="mt-1">User Reports</h1>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Reporter</th><th>Target</th><th>Reason</th><th>Description</th><th>Evidence</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.reporter.username }}</td>
+        <td>{{ r.get_target_type_display }} #{{ r.target_id }}</td>
+        <td><span class="badge badge-neutral">{{ r.get_reason_display }}</span></td>
+        <td style="max-width:180px;font-size:13px;">{{ r.description|truncatechars:70 }}</td>
+        <td>{% if r.evidence %}<a href="{{ r.evidence.url }}" target="_blank" class="btn btn-ghost btn-sm">View</a>{% else %}—{% endif %}</td>
+        <td>
+          <span class="badge {% if r.status == 'resolved' %}badge-success{% elif r.status == 'rejected' %}badge-danger{% elif r.status == 'reviewing' %}badge-warning{% else %}badge-neutral{% endif %}">
+            {{ r.get_status_display }}
+          </span>
+        </td>
+        <td>{{ r.created_at|date:"M d, Y" }}</td>
+        <td>
+          <form method="post" style="min-width:160px;">
+            {% csrf_token %}
+            <input type="hidden" name="report_id" value="{{ r.id }}" />
+            <select name="status" class="form-control" style="font-size:11px;padding:4px 6px;margin-bottom:4px;">
+              <option value="pending" {% if r.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="reviewing" {% if r.status == 'reviewing' %}selected{% endif %}>Reviewing</option>
+              <option value="resolved" {% if r.status == 'resolved' %}selected{% endif %}>Resolved</option>
+              <option value="rejected" {% if r.status == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+            <input type="text" name="admin_note" value="{{ r.admin_note }}" class="form-control" style="font-size:11px;padding:4px 6px;margin-bottom:4px;" placeholder="Note…" />
+            <button type="submit" class="btn btn-dark btn-sm w-full">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="text-center text-muted" style="padding:var(--sp-7);">No reports filed.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

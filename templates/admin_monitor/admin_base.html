@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Admin{% endblock %}</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background:#f4f6f9;
+        }
+
+        .navbar {
+            background:#111827;
+            padding:15px 40px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .navbar a {
+            color:white;
+            text-decoration:none;
+            margin-right:25px;
+            font-weight:600;
+        }
+
+        .navbar a:hover {
+            opacity:0.8;
+        }
+
+        .container {
+            padding:40px;
+        }
+
+        table {
+            width:100%;
+            border-collapse:collapse;
+            background:white;
+            border-radius:10px;
+            overflow:hidden;
+        }
+
+        th, td {
+            padding:14px;
+            text-align:left;
+        }
+
+        th {
+            background:#f3f4f6;
+            font-size:13px;
+            text-transform:uppercase;
+            letter-spacing:1px;
+        }
+
+        tr:nth-child(even) {
+            background:#fafafa;
+        }
+
+        .btn-danger {
+            background:#ef4444;
+            color:white;
+            border:none;
+            padding:6px 14px;
+            border-radius:20px;
+            cursor:pointer;
+        }
+
+        .btn-danger:hover {
+            background:#dc2626;
+        }
+
+        img.thumb {
+            height:60px;
+            border-radius:8px;
+        }
+
+        h1 {
+            margin-bottom:25px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div>
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/dashboard/users/">Users</a>
+        <a href="/dashboard/shop/">Shop</a>
+        <a href="/dashboard/orders/">Orders</a>
+        <a href="/dashboard/community/">Community</a>
+        <a href="/dashboard/reports/">Reports</a>
+        <a href="/dashboard/post-monitor/">Posts</a>
+    </div>
+    <div>
+        <a href="/accounts/logout/">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

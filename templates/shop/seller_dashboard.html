@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Seller Dashboard — BizConnect{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="flex-between mb-5" style="flex-wrap:wrap;gap:var(--sp-3);">
+    <div>
+      <span class="label">Seller Portal</span>
+      <h1 style="margin-top:4px;">Your Dashboard</h1>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'seller_reports' %}" class="btn btn-outline">Sales Reports</a>
+      <a href="{% url 'product_create' %}" class="btn btn-gold">+ New Product</a>
+    </div>
+  </div>
+
+  <h2 class="mb-4" style="font-size:1.1rem;">Your Products</h2>
+  {% if products %}
+  <div class="grid-3 mb-6">
+    {% for p in products %}
+    <div class="product-card">
+      {% if p.image %}
+        <img src="{{ p.image.url }}" alt="{{ p.name }}" class="product-card-img" />
+      {% else %}
+        <div class="product-card-img-placeholder" style="height:140px;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        </div>
+      {% endif %}
+      <div class="product-card-body">
+        <div class="product-name">{{ p.name }}</div>
+        <div class="product-price">₱{{ p.price|floatformat:2 }}</div>
+        <div class="flex gap-2 mt-3">
+          <a href="{% url 'product_edit' p.pk %}" class="btn btn-outline btn-sm">Edit</a>
+          <form method="post" action="{% url 'product_delete' p.pk %}" onsubmit="return confirm('Remove this product?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="panel text-center mb-6" style="padding:var(--sp-7);">
+    <p class="text-muted">No products yet. <a href="{% url 'product_create' %}">Create your first product.</a></p>
+  </div>
+  {% endif %}
+
+  <h2 class="mb-4" style="font-size:1.1rem;">Recent Orders</h2>
+  {% if order_items %}
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr><th>Order #</th><th>Buyer</th><th>Product</th><th>Qty</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+        <tr>
+          <td><a href="{% url 'order_timeline' item.order.id %}" style="font-weight:600;">#{{ item.order.id }}</a></td>
+          <td>{{ item.order.buyer.username }}</td>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>₱{{ item.subtotal|floatformat:2 }}</td>
+          <td>
+            <span class="badge {% if item.order.status == 'delivered' %}badge-success{% elif item.order.status == 'cancelled' %}badge-danger{% else %}badge-warning{% endif %}">
+              {{ item.order.get_status_display }}
+            </span>
+          </td>
+          <td>{{ item.order.created_at|date:"M d, Y" }}</td>
+          <td>
+            <form method="post" action="{% url 'update_order_status' item.order.id %}">
+              {% csrf_token %}
+              <select name="status" class="form-control" style="padding:5px 8px;font-size:12px;width:auto;display:inline-block;">
+                <option value="accepted">Accept</option>
+                <option value="packed">Packed</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancel</option>
+              </select>
+              <button type="submit" class="btn btn-dark btn-sm" style="margin-top:4px;">Update</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="color:var(--text-2);padding:var(--sp-5);">No orders yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

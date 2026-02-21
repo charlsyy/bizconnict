@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}My Cart — BizConnect{% endblock %}
+{% block content %}
+<div class="page" style="max-width:860px;">
+  <span class="label">Shopping</span>
+  <h1 class="mt-1 mb-5">My Cart</h1>
+
+  <div id="empty-msg" class="panel text-center hidden" style="padding:var(--sp-7);">
+    <p class="text-muted">Your cart is empty. <a href="{% url 'product_list' %}">Browse products.</a></p>
+  </div>
+
+  <div id="cart-section">
+    <div class="card table-wrap mb-4">
+      <table id="cart-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Unit Price</th>
+            <th style="width:120px;">Quantity</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cart-body"></tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="max-width:340px;margin-left:auto;">
+      <div class="flex-between mb-3">
+        <span class="text-muted text-sm">Items</span>
+        <span id="total-items">0</span>
+      </div>
+      <div class="flex-between mb-4">
+        <span style="font-weight:600;">Total</span>
+        <span id="total-price" style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--gold-dark);">&#8369;0.00</span>
+      </div>
+      <a href="{% url 'checkout' %}" class="btn btn-gold btn-block">Proceed to Checkout</a>
+      <a href="{% url 'product_list' %}" class="btn btn-ghost btn-block mt-2">Continue Shopping</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function renderCart() {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const tbody = document.getElementById('cart-body');
+  const emptyMsg = document.getElementById('empty-msg');
+  const cartSection = document.getElementById('cart-section');
+
+  if (!cart.length) {
+    emptyMsg.classList.remove('hidden');
+    cartSection.classList.add('hidden');
+    return;
+  }
+
+  emptyMsg.classList.add('hidden');
+  cartSection.classList.remove('hidden');
+
+  let totalItems = 0;
+  let totalPrice = 0;
+  tbody.innerHTML = '';
+
+  cart.forEach(function(item, idx) {
+    const sub = parseFloat(item.price) * item.quantity;
+    totalItems += item.quantity;
+    totalPrice += sub;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(item.name || 'Product #' + item.product_id)}</strong></td>
+      <td>&#8369;${parseFloat(item.price).toFixed(2)}</td>
+      <td>
+        <div class="flex gap-2" style="align-items:center;">
+          <button onclick="changeQty(${idx}, -1)" class="btn btn-outline btn-sm" style="padding:4px 10px;width:28px;height:28px;justify-content:center;">-</button>
+          <span style="font-weight:600;min-width:20px;text-align:center;">${item.quantity}</span>
+          <button onclick="changeQty(${idx}, 1)" class="btn btn-outline btn-sm" style="padding:4px 10px;width:28px;height:28px;justify-content:center;">+</button>
+        </div>
+      </td>
+      <td style="font-weight:600;color:var(--gold-dark);">&#8369;${sub.toFixed(2)}</td>
+      <td>
+        <button onclick="removeItem(${idx})" class="btn btn-danger btn-sm">Remove</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('total-items').textContent = totalItems;
+  document.getElementById('total-price').innerHTML = '&#8369;' + totalPrice.toFixed(2);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function changeQty(idx, delta) {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  if (!cart[idx]) return;
+  cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(idx) {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  cart.splice(idx, 1);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+}
+
+renderCart();
+</script>
+{% endblock %}

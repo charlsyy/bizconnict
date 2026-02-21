@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Community Q&A — BizConnect{% endblock %}
+{% block content %}
+<div class="page" style="max-width:800px;">
+  <div class="flex-between mb-5">
+    <div>
+      <span class="label">Community</span>
+      <h1 class="mt-1">Questions & Answers</h1>
+    </div>
+    <button onclick="document.getElementById('ask-modal').style.display='flex'" class="btn btn-gold">
+      Ask a Question
+    </button>
+  </div>
+
+  <!-- Ask modal -->
+  <div id="ask-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:var(--sp-4);">
+    <div class="panel" style="width:100%;max-width:540px;max-height:90vh;overflow-y:auto;">
+      <div class="flex-between mb-4">
+        <h3>Ask a Question</h3>
+        <button onclick="document.getElementById('ask-modal').style.display='none'" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+      <form method="post" action="{% url 'create_question' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" name="title" class="form-control" placeholder="Short, clear question title" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Details *</label>
+          <textarea name="body" class="form-control" rows="4" placeholder="Provide more context…" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Attach Image (optional)</label>
+          <input type="file" name="image" class="form-control" accept="image/*" />
+        </div>
+        <button type="submit" class="btn btn-gold btn-block">Post Question</button>
+      </form>
+    </div>
+  </div>
+
+  {% for q in questions %}
+  <a href="{% url 'question_detail' q.pk %}" style="text-decoration:none;color:inherit;display:block;">
+    <div class="card mb-3" style="padding:var(--sp-4) var(--sp-5);transition:all var(--t);" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform=''">
+      <div class="flex-between">
+        <div style="flex:1;min-width:0;">
+          <div class="flex gap-2 mb-2" style="flex-wrap:wrap;">
+            {% if q.is_solved %}
+              <span class="badge badge-success">Solved</span>
+            {% else %}
+              <span class="badge badge-neutral">Open</span>
+            {% endif %}
+          </div>
+
+          <div style="font-family:var(--font-display);font-size:1rem;font-weight:600;margin-bottom:4px;">
+            {{ q.title }}
+          </div>
+
+          <div class="text-sm text-muted truncate">
+            {{ q.body|truncatechars:120 }}
+          </div>
+
+          <div class="text-xs text-muted mt-2">
+            by {{ q.author.username }} · {{ q.created_at|timesince }} ago ·
+            {{ q.answer_count }} answer{{ q.answer_count|pluralize }}
+          </div>
+        </div>
+
+        {% if q.image %}
+          <img src="{{ q.image.url }}" style="width:60px;height:60px;border-radius:var(--r-sm);object-fit:cover;margin-left:var(--sp-4);flex-shrink:0;" />
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% empty %}
+  <div class="panel text-center" style="padding:var(--sp-7);">
+    <p class="text-muted">No questions yet. Be the first to ask!</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Notifications — BizConnect{% endblock %}
+{% block content %}
+<div class="page page-sm">
+  <div class="flex-between mb-5">
+    <h1>Notifications</h1>
+    {% if unread_count > 0 %}
+    <form method="post" action="{% url 'mark_all_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline btn-sm">Mark all read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card overflow-hidden">
+    {% for n in notifs %}
+    <div class="notif-item {% if not n.is_read %}unread{% endif %}">
+      {% if not n.is_read %}<div class="notif-dot"></div>{% else %}<div style="width:8px;flex-shrink:0;"></div>{% endif %}
+      <div style="flex:1;min-width:0;">
+        <div class="text-sm" style="line-height:1.55;">
+          {% if n.link %}<a href="{{ n.link }}" style="color:var(--text);">{{ n.message }}</a>
+          {% else %}{{ n.message }}{% endif %}
+        </div>
+        <div class="text-xs text-muted mt-1">{{ n.created_at|timesince }} ago</div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="padding:var(--sp-7);text-align:center;color:var(--text-2);">
+      No notifications yet.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
