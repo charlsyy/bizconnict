@@ -2,14 +2,24 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load .env
 load_dotenv()
 
+# Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# =========================
+# SECURITY
+# =========================
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret-key-change-me')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
+
+# =========================
+# APPS
+# =========================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -17,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'accounts',
     'shop',
     'chat',
@@ -27,8 +38,13 @@ INSTALLED_APPS = [
     'reports',
 ]
 
+
+# =========================
+# MIDDLEWARE
+# =========================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # IMPORTANT
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -37,8 +53,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 ROOT_URLCONF = 'ecommerce.urls'
 
+
+# =========================
+# TEMPLATES
+# =========================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -56,8 +77,13 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'ecommerce.wsgi.application'
 
+
+# =========================
+# DATABASE
+# =========================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -69,25 +95,55 @@ DATABASES = {
     }
 }
 
+
+# =========================
+# INTERNATIONAL
+# =========================
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# =========================
+# STATIC FILES (PRODUCTION READY)
+# =========================
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# =========================
+# MEDIA
+# =========================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# =========================
+# LOGIN
+# =========================
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 
-FIREBASE_CREDENTIALS_PATH = os.environ.get('FIREBASE_CREDENTIALS_PATH', 'firebase-credentials.json')
 
+# =========================
+# FIREBASE
+# =========================
+FIREBASE_CREDENTIALS_PATH = os.environ.get(
+    'FIREBASE_CREDENTIALS_PATH',
+    'firebase-credentials.json'
+)
+
+
+# =========================
+# EMAIL
+# =========================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -96,17 +152,32 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+
+# =========================
+# SESSION
+# =========================
 SESSION_COOKIE_AGE = 86400 * 7
 
+
+# =========================
+# SUPABASE
+# =========================
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 SUPABASE_BUCKET = os.environ.get('SUPABASE_BUCKET', 'media')
 
 
+# =========================
+# STRIPE
+# =========================
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
+
+# =========================
+# PAYMENT INFO
+# =========================
 GCASH_NUMBER = os.environ.get('GCASH_NUMBER', '09XX-XXX-XXXX')
 GCASH_NAME = os.environ.get('GCASH_NAME', 'BizConnect Store')
 BANK_NAME = os.environ.get('BANK_NAME', 'BDO')
